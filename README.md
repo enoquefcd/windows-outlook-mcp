@@ -11,7 +11,7 @@ This is a unified MCP (Model Context Protocol) server for comprehensive Microsof
 - Microsoft Outlook installed and configured
 - Node.js 16.0 or higher
 - PowerShell 5.0 or higher
-- 
+
 ### 1. Install dependencies
 ```powershell
 cd path\to\windows-outlook-mcp
@@ -123,7 +123,7 @@ To extend functionality, modify the relevant TypeScript files and recompile.
 - `summarize_inbox` - Batch summarize inbox emails with priority grouping
 
 ### ✍️ Draft Management
-- `create_draft` - Create a new email draft with recipients, subject, and body
+- `create_draft` - Create a new email draft with recipients, subject, and body (supports HTML via `isHtml: true`)
 - `duplicate_email_as_draft` - Duplicate an existing email as a draft (preserving formatting)
 
 ### 📅 Calendar Management
