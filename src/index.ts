@@ -99,7 +99,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             },
             body: {
               type: "string",
-              description: "Email content"
+              description: "Email content (plain text or HTML)"
+            },
+            isHtml: {
+              type: "boolean",
+              description: "Set to true when body contains HTML markup. Outlook will render it as rich text.",
+              default: false
             },
             cc: {
               type: "array",
@@ -534,6 +539,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           to: (args as any)?.to || [],
           subject: (args as any)?.subject || '',
           body: (args as any)?.body || '',
+          isHtml: !!(args as any)?.isHtml,
           cc: (args as any)?.cc,
           bcc: (args as any)?.bcc,
         };

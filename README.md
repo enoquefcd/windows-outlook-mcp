@@ -52,6 +52,42 @@ Find free 30-minute slots in my calendar for next week between 9 AM and 5 PM.
 
 
 
+## Using from WSL (Windows Subsystem for Linux)
+
+The MCP server runs on Windows (requires the Outlook COM interface), but Claude Code
+runs inside WSL. Bridge them by pointing the WSL Claude config at the Windows Node
+binary and the Windows dist path.
+
+### Claude Code config (`~/.claude.json` or `~/.claude/settings.json`)
+
+```json
+{
+  "mcpServers": {
+    "outlook": {
+      "command": "/mnt/c/Program Files/nodejs/node.exe",
+      "args": ["C:\\Users\\<your-username>\\windows-outlook-mcp\\dist\\index.js"]
+    }
+  }
+}
+```
+
+> **Note:** Use the Windows `node.exe` via `/mnt/c/...` — do **not** use the WSL
+> Node binary. The server spawns PowerShell COM calls that only work from a Windows
+> process. The WSL path `/mnt/c/...` is transparent to Windows Node.
+
+### Build from WSL
+
+You can edit source in WSL and build via the Windows npm:
+
+```bash
+cd /mnt/c/Users/<your-username>/windows-outlook-mcp
+/mnt/c/Program Files/nodejs/npm.cmd run build
+```
+
+Or open a PowerShell terminal on the Windows side and run `npm run build` there.
+
+---
+
 ## Development Notes
 
 Project structure:

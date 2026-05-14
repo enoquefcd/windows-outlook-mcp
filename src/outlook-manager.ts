@@ -1,4 +1,7 @@
 import { spawn } from 'child_process';
+import { writeFileSync } from 'fs';
+import { tmpdir } from 'os';
+import { join } from 'path';
 
 export interface EmailMessage {
   id: string;
@@ -326,27 +329,40 @@ export class OutlookManager {
 
   async createDraft(draft: EmailDraft): Promise<string> {
     const cleanSubject = this.cleanText(draft.subject);
-    // Don't clean the body for drafts - preserve line breaks
-    const formattedBody = this.formatBodyForOutlook(draft.body);
-    
+    // For HTML: write body to a temp file so PowerShell reads it with proper UTF-8
+    // encoding, avoiding all command-line length limits and quoting issues.
+    // For plain text: use the normal CRLF-formatted inline string.
+    let bodyAssignment: string;
+    if (draft.isHtml) {
+      const tmpFilePath = join(tmpdir(), `fhacc-draft-${Date.now()}.html`);
+      writeFileSync(tmpFilePath, draft.body, 'utf8');
+      const winPath = tmpFilePath.replace(/\\/g, '\\\\');
+      bodyAssignment = `$mail.BodyFormat = 2
+        $mail.HTMLBody = [System.IO.File]::ReadAllText("${winPath}", [System.Text.Encoding]::UTF8)
+        Remove-Item "${winPath}" -ErrorAction SilentlyContinue`;
+    } else {
+      const formattedBody = this.formatBodyForOutlook(draft.body);
+      bodyAssignment = `$mail.Body = "${formattedBody.replace(/"/g, '""')}"`;
+    }
+
     const script = `
       try {
         Add-Type -AssemblyName "Microsoft.Office.Interop.Outlook"
         $outlook = New-Object -ComObject Outlook.Application
         $mail = $outlook.CreateItem(0)
-        
+
         $mail.Subject = "${cleanSubject.replace(/"/g, '""')}"
-        $mail.Body = "${formattedBody.replace(/"/g, '""')}"
-        
+        ${bodyAssignment}
+
         foreach ($recipient in @("${draft.to.join('","')}")) {
-          if ($recipient.Trim()) { 
+          if ($recipient.Trim()) {
             $mail.Recipients.Add($recipient.Trim()) | Out-Null
           }
         }
-        
+
         $mail.Recipients.ResolveAll() | Out-Null
         $mail.Save()
-        
+
         Write-Output "success"
       } catch {
         Write-Output "error: $($_.Exception.Message)"
